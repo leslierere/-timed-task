@@ -344,50 +344,31 @@ def splitL(ls):
 
 
 if __name__ == '__main__':
-    currentMin = int(time.strftime("%M", time.localtime()))
-    #currentMin = 40
-    currentHour = int(time.strftime("%H", time.localtime()))
-    schedTimer = datetime.datetime.now()#获取当前时间
-    if currentMin >= 50 or currentMin < 5:
-        sleepFor = 15 * 60
-        print("在", sleepFor / 60, "分钟后开始爬取数据")
-        time.sleep(sleepFor)
-        schedTimer = datetime.datetime.now()
-        #如果程序启动在50分之后，5分之前，等待15分钟再开始
-    while currentHour != 0 and currentHour != 12:
-        print("等待至0时或者12时")
-        time.sleep(3600)
-        currentHour = int(time.strftime("%H", time.localtime()))
-    flag = 1
+    scheduler = BlockingScheduler()
+    scheduler.add_job(job, 'cron',  hour='0, 12', minute='30')
+    scheduler.start()
 
-    while True:
-        if flag == 1:
-            #主程序开始
-            getKW()
-            kwList = list(kwSet)
-            print("搜索关键字：", kwList)
-            nestedL = splitL(kwList)#获取切分为5个1组的list
-            var = random.random()
-            print("随机睡0-60秒")
-            time.sleep(var * 60)  # 先返回了0到1的随机数，再乘以1分钟
-            options = webdriver.ChromeOptions()
-            options.add_argument('--headless')
-            options.add_argument('--no-sandbox')
-            options.add_argument('--disable-dev-shm-usage')
-            options.add_argument(
-                '"User-Agent"="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_6) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/11.1.2 Safari/605.1.15"')
-            browser = webdriver.Chrome()
-            browser.set_page_load_timeout(10)  # 给浏览器设置超时
-            browser.implicitly_wait(10)
-            wait = WebDriverWait(browser, 15)
-            t = Thread(target=timedTask(), daemon=True)
-            t.start()
-            #主程序结束
-            schedTimer = schedTimer + datetime.timedelta(hours = 12)
-            flag = 0
-        now = datetime.datetime.now()
-        if schedTimer < now < (schedTimer+datetime.timedelta(seconds=10)):
-            flag = 1
+def job():
+    getKW()
+    kwList = list(kwSet)
+    print("搜索关键字：", kwList)
+    nestedL = splitL(kwList)#获取切分为5个1组的list
+    var = random.random()
+    print("随机睡0-60秒")
+    time.sleep(var * 60)  # 先返回了0到1的随机数，再乘以1分钟
+    options = webdriver.ChromeOptions()
+    options.add_argument('--headless')
+    options.add_argument('--no-sandbox')
+    options.add_argument('--disable-dev-shm-usage')
+    options.add_argument(
+        '"User-Agent"="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_6) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/11.1.2 Safari/605.1.15"')
+    browser = webdriver.Chrome()
+    browser.set_page_load_timeout(10)  # 给浏览器设置超时
+    browser.implicitly_wait(10)
+    wait = WebDriverWait(browser, 15)
+    timedTask()
+
+
 
 
 # 怎么用cookie登录百度
