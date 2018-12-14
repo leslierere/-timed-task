@@ -10,7 +10,10 @@ from selenium.common.exceptions import InvalidElementStateException, TimeoutExce
 import time
 import datetime
 from config import *
+from apscheduler.schedulers.blocking import BlockingScheduler
 from threading import Thread
+from datetime import datetime
+import logging
 
 
 kwSet = set([])
@@ -40,7 +43,7 @@ def toIndex():#去往index首页
             time.sleep(5)
             #browser.refresh()
 
-def search(cookie1, cookie2, cookie3, kwList):
+def search(cookie1, cookie2, cookie3, kwList, wait):
     """
 
     :rtype: list of set
@@ -218,7 +221,7 @@ def locateGD():
 
 
 #进行账号登录
-def getCookie():
+def getCookie(browser):
     bdUrl = 'http://www.baidu.com'
 
     browser.delete_all_cookies()
@@ -226,7 +229,8 @@ def getCookie():
         try:
             browser.get(bdUrl)
             break
-        except:
+        except Exception as e:
+            logging.exception(e)
             print('================浏览器超时，重新加载====================')
     # print(driver.get_cookies())
     time.sleep(5)
@@ -287,6 +291,7 @@ def changeState(ls):#对不存在百度指数的关键字，将其在数据库�
 
 #从数据库获取关键字
 def getKW():
+    print('获取关键字')
     try:
         conn = cx_Oracle.connect('wechat/wechat123@10.153.122.25:1521/SZQX')
         version = conn.version
@@ -323,15 +328,15 @@ def storeData(dic):
         print('数据库连接错误: ', repr(e))
 
 
-def timedTask():
+def timedTask(browser, wait):
 
     print(time.asctime(), "开始获取数据")
-    cookies = getCookie()
+    cookies = getCookie(browser)
     cookie1 = cookies[-3]
     cookie2 = cookies[-2]
     cookie3 = cookies[-1]
 
-    result = search(cookie1, cookie2, cookie3, kwList)  # 得到的text
+    result = search(cookie1, cookie2, cookie3, kwList, wait)  # 得到的text
     print("=======================待传入数据=======================\n", result)
     storeData(result)
 
@@ -343,10 +348,6 @@ def splitL(ls):
     return nestedL
 
 
-if __name__ == '__main__':
-    scheduler = BlockingScheduler()
-    scheduler.add_job(job, 'cron',  hour='0, 12', minute='30')
-    scheduler.start()
 
 def job():
     getKW()
@@ -366,9 +367,13 @@ def job():
     browser.set_page_load_timeout(10)  # 给浏览器设置超时
     browser.implicitly_wait(10)
     wait = WebDriverWait(browser, 15)
-    timedTask()
+    timedTask(browser, wait)
 
-
+if __name__ == '__main__':
+    print('程序启动时间', datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+    scheduler = BlockingScheduler()
+    scheduler.add_job(job, 'cron',  hour='1, 12', minute='30')
+    scheduler.start()
 
 
 # 怎么用cookie登录百度
