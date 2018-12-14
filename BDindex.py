@@ -372,7 +372,7 @@ def job():
 if __name__ == '__main__':
     print('程序启动时间', datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
     scheduler = BlockingScheduler()
-    scheduler.add_job(job, 'cron',  hour='1, 12', minute='30')
+    scheduler.add_job(job, 'cron',  hour='0, 12', minute='30')
     scheduler.start()
 
 
